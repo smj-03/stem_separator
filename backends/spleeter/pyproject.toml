@@ -1,0 +1,30 @@
+# Osobne środowisko dla Spleetera.
+# Spleeter wymaga starego TensorFlow (tf.estimator usunięto w TF 2.16) i typer<0.4,
+# więc nie da się go zainstalować obok PyTorcha i reszty projektu.
+# Główny projekt uruchamia worker.py jako podproces: `uv run --project backends/spleeter`.
+[project]
+name = "stemsep-spleeter-backend"
+version = "0.0.1"
+requires-python = "~=3.10.0"
+dependencies = [
+    # 2.4.x wymaga TF 2.12, który nie ma wersji na macOS arm64
+    "spleeter==2.3.2",
+    # TF 2.13: pierwsza wersja z paczkami na Apple Silicon, ma jeszcze tf.estimator
+    # i akceptuje numpy 1.22 (wymagane przez numbę 0.55)
+    "tensorflow==2.13.*",
+    # Na macOS arm64 paczka tensorflow to pusta nakładka na tensorflow-macos,
+    # której uv nie wykrywa sam (czyta zależności z paczki linuksowej)
+    "tensorflow-macos==2.13.*; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    # Resolver wybierał numbę 0.47 bez paczek dla arm64; spleeter przypina llvmlite 0.38,
+    # z którym zgodna jest numba 0.55 (pierwsza z gotowymi paczkami dla Apple Silicon)
+    "numba==0.55.*",
+    # numba 0.55 importuje pkg_resources, którego nie ma w nowych setuptools
+    "setuptools<70",
+]
+
+[tool.uv]
+package = false
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux'",
+]
